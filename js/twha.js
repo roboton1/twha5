@@ -19,14 +19,33 @@
 
 	data.year_clamp = function()
 	{
-		if (this.year < 1899) {
-			this.year = 1899;
+		if (this.year < 1900) {
+			this.year = 1900;
 		} else if (this.year == 0) {
 			this.year = 1;
 		} else if (this.year > MAX_YEAR) {
 			this.year = MAX_YEAR;
 		}
 	};
+
+/*** test_002 START ***/
+  //紀元0年をまたぐときの処理
+  data.year_minus = function () {
+    if (this.year === 1) {
+      data.year -= 2;
+    } else {
+      data.year--;
+    }
+  };
+  //紀元0年をまたぐときの処理
+  data.year_plus = function () {
+    if (this.year === -1) {
+      data.year += 2;
+    } else {
+      data.year++;
+    }
+  };
+/*** test_002 END ***/
 
 	function resize()
 	{

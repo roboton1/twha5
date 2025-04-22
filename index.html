@@ -2,22 +2,99 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<style type="text/css"> @import "style.css"; </style>
-<script type="application/x-javascript">
 
-'use strict';
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=auto">
+<meta http-equiv="Content-Security-Policy" content="default-src * data: gap: https://ssl.gstatic.com; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
 
-const MAX_YEAR = 2019;
+<script src="components/loader.js"></script>
+<script src="components/monaca-onsenui/js/onsenui.min.js"></script>
 
-const data = {
-	map_x: 2500,
-	map_y: 580,
-	year: 1900,
-	zoom: 1,
-	lang: 'ja',
-};
+<link rel="stylesheet" href="components/loader.css">
+<link rel="stylesheet" href="components/monaca-onsenui/css/onsenui.css">
+<link rel="stylesheet" href="components/monaca-onsenui/css/onsen-css-components.css">
+<link rel="stylesheet" href="css/style.css">
 
+<script src="./apps.admob.js"></script>
+
+<style>
+    .page__background {
+    background:url("./images/background_image.png") center center;
+    background-size:cover;
+    }
+</style>
+
+<style>
+    .bannerdiv
+    {
+        width:100%; min-height:50px;
+        padding:0px;
+    }
+</style>
+
+<script>
+    ons.ready(function() {
+        console.log("Onsen UI is ready!");
+    });
+
+    function onDeviceReady() {
+        console.log("Device is ready");
+        var media = new Media (srcFile , onSuccess, onError);
+    }
+
+    document.addEventListener('show', function(event) {
+        var page = event.target;
+        if (page.id == "home") {
+            if (sound_flag) {
+                $("#sound_off").hide();
+                $("#sound_on").show();
+            } else {
+                $("#sound_off").show();
+                $("#sound_on").hide();
+            }
+            setTimeout(function() {
+                showModal();
+            }, 2000);
+        }
+    });
+
+    $(function(){
+        $('#global-tabbar').on('prechange', function(e) {
+            return;
+        });
+    });
+
+    function openLink(url)
+    {
+        window.open(url, "_blank");
+    }
+     if (ons.platform.isIPhoneX()) {
+        document.documentElement.setAttribute('onsflag-iphonex-landscape', '');
+    }
 </script>
+
+<!--
+/*** アプリ内から外部ブラウザを立ち上げる ***/
+-->
+<!--
+<script>
+    function URLClick000(){ window.open = cordova.InAppBrowser.open; window.open("https://keysnext.com/privacy_policy.html", "_system", 'location=yes'); }
+</script>    
+-->
+
+<style type="text/css"> @import "style.css"; </style>
+
+<script type="application/x-javascript">
+'use strict';
+const MAX_YEAR = 2020;
+const data = {
+    map_x: 2500,
+    map_y: 580,
+    year: 1900,
+    zoom: 1,
+    lang: 'ja',
+    };
+</script>
+
 <script type="application/javascript" src="js/era.js" defer></script>
 <script type="application/javascript" src="js/territory.js" defer></script>
 <script type="application/javascript" src="js/regions.js" defer></script>
@@ -28,20 +105,46 @@ const data = {
 <script type="application/javascript" src="js/Region.js" defer></script>
 <script type="application/javascript" src="js/Map.js" defer></script>
 <script type="application/javascript" src="js/twha.js" defer></script>
-<title>The World Historical Atras</title>
+
+<!-- <title>世界歴史地図</title> -->
+
 </head>
+
 <body>
+
+        <script>
+            ons.getScriptPage().onInit = function() {
+                this.onShow = function() {
+                    loadRectBanner();
+                    loadIndexBanner();
+                };
+            };
+        </script>
+
+<!-- オリジナルの記述 ここから -->
 <div id="head">
-<div id="scale-zoom"><img src="img/thumb-v.png" id="scale-zoom-cursor" alt=""></div>
-<div class="lang-button" id="lang-ja"></div><div class="lang-button" id="lang-en"></div><div class="lang-button" id="lang-zh"></div>
-<form id="year"><span id="year-text"></span><input type="text" id="year-input" value="" autocomplete="no"></form>
-<div id="year-sub"></div>
+   <div id="scale-zoom">
+      <img src="img/thumb-v.png" id="scale-zoom-cursor" alt="">
+   </div>
+   <div class="lang-button" id="lang-ja"></div>
+   <div class="lang-button" id="lang-en"></div>
+   <div class="lang-button" id="lang-zh"></div>
+   <form id="year">
+      <span id="year-text"></span>
+      <input type="text" id="year-input" value="" autocomplete="no">
+   </form>
+   <div id="year-sub"></div>
 </div>
+
 <div id="layer-land"></div>
 <div id="layer-tert"></div>
 <div id="layer-info"></div>
 <div id="year-bar">
-<img id="year-bar-cursor" src="img/year-pos.png" alt=""><img id="year-arrow-left" src="img/arrow-left.png" alt=""><canvas id="year-bar-scale" height="32"></canvas><img id="year-arrow-right" src="img/arrow-right.png" alt="">
+   <img id="year-bar-cursor" src="img/year-pos.png" alt=""><img id="year-arrow-left" src="img/arrow-left.png" alt=""><canvas id="year-bar-scale" height="32"></canvas><img id="year-arrow-right" src="img/arrow-right.png" alt="">
 </div>
+<!-- オリジナルの記述 ここまで -->
+
 </body>
+
 </html>
+
