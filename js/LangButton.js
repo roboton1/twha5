@@ -12,8 +12,8 @@ function LangButton()
 		switch (data.lang) {
 		case 'ja':
 			button_ja.innerText = '日';
-			button_en.innerText = '英';
-			button_zh.innerText = '中';
+			button_en.innerText = '';
+			button_zh.innerText = '';
 			button_ja.style.fontWeight = 'bold';
 			button_en.style.fontWeight = '';
 			button_zh.style.fontWeight = '';
@@ -52,12 +52,12 @@ function LangButton()
 	});
 	button_en.addEventListener('mousedown', function()
 	{
-		data.lang = 'en';
+		data.lang = 'ja';
 		update();
 	});
 	button_zh.addEventListener('mousedown', function()
 	{
-		data.lang = 'zh';
+		data.lang = 'ja';
 		update();
 	});
 
