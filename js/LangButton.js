@@ -11,25 +11,25 @@ function LangButton()
 	{
 		switch (data.lang) {
 		case 'ja':
-			button_ja.innerText = '日本語';
-			button_en.innerText = '英語';
-			button_zh.innerText = '中国語';
+			button_ja.innerText = '日';
+			button_en.innerText = '英';
+			button_zh.innerText = '中';
 			button_ja.style.fontWeight = 'bold';
 			button_en.style.fontWeight = '';
 			button_zh.style.fontWeight = '';
 			break;
 		case 'en':
-			button_ja.innerText = 'Japanese';
-			button_en.innerText = 'English';
-			button_zh.innerText = 'Chinese';
+			button_ja.innerText = 'JP';
+			button_en.innerText = 'EN';
+			button_zh.innerText = 'ZH';
 			button_ja.style.fontWeight = '';
 			button_en.style.fontWeight = 'bold';
 			button_zh.style.fontWeight = '';
 			break;
 		case 'zh':
-			button_ja.innerText = '日文';
-			button_en.innerText = '英文';
-			button_zh.innerText = '中文';
+			button_ja.innerText = '日';
+			button_en.innerText = '英';
+			button_zh.innerText = '中';
 			button_ja.style.fontWeight = '';
 			button_en.style.fontWeight = '';
 			button_zh.style.fontWeight = 'bold';

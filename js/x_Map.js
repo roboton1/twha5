@@ -299,36 +299,16 @@ function Map()
 		}
 	};
 
-	infoLayer.addEventListener('touchstart', function(e)
+	infoLayer.addEventListener('mousedown', function(e)
 	{
-//		mousedown_x = e.clientX;
-//		mousedown_y = e.clientY;
-		mousedown_x = e.touches[ 0 ].clientX;
-		mousedown_y = e.touches[ 0 ].clientY;
-        e.preventDefault();
-	});
-	infoLayer.addEventListener('touchmove', function(e)
-	{
-		if (e.buttons != 0 && (mousedown_x !== e.touches[ 0 ].clientX || mousedown_y !== e.touches[ 0 ].clientY)) {
-			// マウスドラッグによるスクロール
-			data.map_x += mousedown_x - e.touches[ 0 ].clientX;
-			data.map_y += mousedown_y - e.touches[ 0 ].clientY;
-			limit_map_center();
-			mousedown_x = e.touches[ 0 ].clientX;
-			mousedown_y = e.touches[ 0 ].clientY;
-			update_map();
-			update_info();
-		}
-        e.preventDefault();
-	});
-	infoLayer.addEventListener('mousedown', function(e) {
 		mousedown_x = e.clientX;
 		mousedown_y = e.clientY;
-		e.preventDefault();
+        e.preventDefault();
 	});
-	
-	infoLayer.addEventListener('mousemove', function(e) {
-		if (e.buttons !== 0 && (mousedown_x !== e.clientX || mousedown_y !== e.clientY)) {
+	infoLayer.addEventListener('mousemove', function(e)
+	{
+		if (e.buttons != 0 && (mousedown_x !== e.clientX || mousedown_y !== e.clientY)) {
+			// マウスドラッグによるスクロール
 			data.map_x += mousedown_x - e.clientX;
 			data.map_y += mousedown_y - e.clientY;
 			limit_map_center();
@@ -336,7 +316,7 @@ function Map()
 			mousedown_y = e.clientY;
 			update_map();
 			update_info();
-			e.preventDefault();
 		}
-	});	
+        e.preventDefault();
+	});
 }
