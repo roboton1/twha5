@@ -19,8 +19,8 @@
 
 	data.year_clamp = function()
 	{
-		if (this.year < 1900) {
-			this.year = 1900;
+		if (this.year < -4000) {
+			this.year = -4000;
 		} else if (this.year == 0) {
 			this.year = 1;
 		} else if (this.year > MAX_YEAR) {
