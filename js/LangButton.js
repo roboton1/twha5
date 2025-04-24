@@ -2,39 +2,10 @@
 
 function LangButton()
 {
-	const button_ja = document.getElementById('lang-ja');
-	const button_en = document.getElementById('lang-en');
-	const button_zh = document.getElementById('lang-zh');
 	let on_changed_handler = null;
 
 	function update()
 	{
-		switch (data.lang) {
-		case 'ja':
-			button_ja.innerText = '日';
-			button_en.innerText = '';
-			button_zh.innerText = '';
-			button_ja.style.fontWeight = 'bold';
-			button_en.style.fontWeight = '';
-			button_zh.style.fontWeight = '';
-			break;
-		case 'en':
-			button_ja.innerText = 'JP';
-			button_en.innerText = 'EN';
-			button_zh.innerText = 'ZH';
-			button_ja.style.fontWeight = '';
-			button_en.style.fontWeight = 'bold';
-			button_zh.style.fontWeight = '';
-			break;
-		case 'zh':
-			button_ja.innerText = '日';
-			button_en.innerText = '英';
-			button_zh.innerText = '中';
-			button_ja.style.fontWeight = '';
-			button_en.style.fontWeight = '';
-			button_zh.style.fontWeight = 'bold';
-			break;
-		}
 		if (on_changed_handler) {
 			on_changed_handler();
 		}
@@ -45,19 +16,8 @@ function LangButton()
 		on_changed_handler = f;
 	};
 
-	button_ja.addEventListener('mousedown', function()
-	{
-		data.lang = 'ja';
-		update();
-	});
-	button_en.addEventListener('mousedown', function()
-	{
-		data.lang = 'ja';
-		update();
-	});
-	button_zh.addEventListener('mousedown', function()
-	{
-		data.lang = 'ja';
+	document.getElementById('lang-select').addEventListener('change', function() {
+		data.lang = this.value;
 		update();
 	});
 

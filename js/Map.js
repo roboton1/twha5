@@ -9,7 +9,6 @@ function Map()
 	const MAP_SIZE = 450;
 	const MAP_X = 8;
 	const MAP_Y = 4;
-	const SCALES = [0.5, 1, 2, 4, 8];
 
 	const mpLandCache = new Array(MAP_X * MAP_Y);
 	const mpTertCache = new Array(MAP_X * MAP_Y);
@@ -20,11 +19,16 @@ function Map()
 
 	let curWidth, curHeight;
 	let curWidth2, curHeight2;
-	let mousedown_x = 0;
-	let mousedown_y = 0;
+	let mousedown_x = null;
+	let mousedown_y = null;
 	let prev_zoom = data.zoom;
 	let prev_year = -9999;
 
+
+	function scale_for(zoom)
+	{
+		return 2**(zoom - 1);
+	}
 
 	function getMapLandPart(i, j)
 	{
@@ -67,19 +71,44 @@ function Map()
 		mp.setAttribute('src', 't/' + i + j + '/' + getMapTertYear(data.year, i, j) + '.png');
 		return mp;
 	}
-	function update_map()
+
+	function set_zoom_with_shift(new_zoom, shift)
+	{
+		if (new_zoom === data.zoom) {
+			return false;
+		}
+		const [dx, dy] = shift || [];
+		if (shift) {
+			scroll_internally(dx, dy, true);
+		}
+		data.zoom = new_zoom;
+		update_center();
+		if (shift) {
+			scroll_internally(- dx, - dy);
+		}
+		update();
+		return true;
+	}
+	this.set_zoom_with_shift = set_zoom_with_shift;
+
+	function update_center()
 	{
 		// zoomが変化している場合、座標中心も変化する
 		if (prev_zoom !== data.zoom) {
-			data.map_x = Math.round(data.map_x * SCALES[data.zoom] / SCALES[prev_zoom]);
-			data.map_y = Math.round(data.map_y * SCALES[data.zoom] / SCALES[prev_zoom]);
+			data.map_x = Math.round(data.map_x * scale_for(data.zoom) / scale_for(prev_zoom));
+			data.map_y = Math.round(data.map_y * scale_for(data.zoom) / scale_for(prev_zoom));
 			prev_zoom = data.zoom;
 		}
+	}
+
+	function update_map()
+	{
+		update_center();
 
 		// マップの表示範囲を計算
 		let curX = data.map_x;
 		let curY = data.map_y;
-		let mapSize = MAP_SIZE * SCALES[data.zoom];
+		let mapSize = MAP_SIZE * scale_for(data.zoom);
 		let maxW = Math.ceil(curWidth / mapSize);
 		let maxH = Math.ceil(curHeight / mapSize);
 
@@ -114,6 +143,10 @@ function Map()
 			if (rev) {
 				vi = !vi;
 			}
+			if (maxW >= MAP_X) {
+				// all is visible when screen width >= map width
+				vi = true;
+			}
 			for (let j = 0; j < MAP_Y; j++) {
 				let idx = i + j * MAP_X;
 				let mpLand;
@@ -135,14 +168,24 @@ function Map()
 						dx += MAP_X;
 					}
 					let dy = j - py;
+					let x = dx * mapSize - mx;
+					let y = dy * mapSize - my;
 
-					mpLand.style.left = (dx * mapSize - mx) + 'px';
-					mpLand.style.top = (dy * mapSize - my) + 'px';
+					// for consistency with infoLayer
+					const map_width = mapSize * MAP_X;
+					const map_x_min = curWidth2 - map_width * 0.5;
+					x = wrap_within_range(x, map_x_min, map_width);
+					if (x + mapSize * 0.5 > map_x_min + map_width) {
+						x = x - map_width;
+					}
+
+					mpLand.style.left = x + 'px';
+					mpLand.style.top = y + 'px';
 					mpLand.setAttribute('width', mapSize);
 					mpLand.setAttribute('height', mapSize);
 
-					mpTert.style.left = (dx * mapSize - mx) + 'px';
-					mpTert.style.top = (dy * mapSize - my) + 'px';
+					mpTert.style.left = x + 'px';
+					mpTert.style.top = y + 'px';
 					mpTert.setAttribute('width', mapSize);
 					mpTert.setAttribute('height', mapSize);
 				} else {
@@ -158,6 +201,19 @@ function Map()
 				}
 			}
 		}
+		update_url();
+		toast(data.year);
+	}
+
+	function wrap_within_range(u, min, width)
+	{
+		// return v s.t. "u = v (mod width)" and "min <= v < min + width"
+		return min + positive_mod(u - min, width);
+	}
+	function positive_mod(n, divisor)
+	{
+		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Remainder
+		return ((n % divisor) + divisor) % divisor;
 	}
 
 	// 全Regionから、指定した年に含まれるものだけを抽出
@@ -214,7 +270,7 @@ function Map()
 			visible_regions = [];
 			prev_year = data.year;
 		}
-		let scale = SCALES[data.zoom];
+		let scale = scale_for(data.zoom);
 		let mapSize = MAP_SIZE * scale;
 		let curX = data.map_x;
 		let curY = data.map_y;
@@ -251,7 +307,7 @@ function Map()
 	// スクロール位置を合わせる
 	function limit_map_center()
 	{
-		let mapSize = MAP_SIZE * SCALES[data.zoom];
+		let mapSize = MAP_SIZE * scale_for(data.zoom);
 		let maxX = MAP_X * mapSize;
 		let maxY = MAP_Y * mapSize;
 
@@ -263,12 +319,99 @@ function Map()
 		}
 
 		// 上下限を超えないようにする
-		if (data.map_y < 0) {
-			data.map_y = 0;
-		} else if (data.map_y > maxY) {
-			data.map_y = maxY;
+		const head_bottom = get_element_y('head', 'bottom');
+		const foot_top = get_element_y('year-bar', 'top');
+		const map_y_min = curHeight2 - (head_bottom - 1);
+		const map_y_max = maxY + (curHeight2 - foot_top - 1);
+		if (map_y_min < map_y_max) {
+			data.map_y = Math.max(map_y_min, Math.min(data.map_y, map_y_max));
+		} else {
+			data.map_y = (map_y_min + map_y_max) * 0.5;
+		}
+		data.map_y = Math.round(data.map_y);  // for safety
+	}
+
+	function get_element_y(id, key)
+	{
+		return document.getElementById(id).getBoundingClientRect()[key] + window.pageYOffset;
+	}
+
+	function scroll(dx, dy)
+	{
+		scroll_internally(dx, dy);
+		update_map();
+		update_info();
+	}
+	function scroll_internally(dx, dy, ignore_limit)
+	{
+		data.map_x += dx;
+		data.map_y += dy;
+		if (!ignore_limit) {
+			limit_map_center();
 		}
 	}
+
+	// https://github.com/kaorahi/lizgoban/releases/tag/v0.6.0-pre2
+	// から流用
+	let last_toast_message = null;
+	let last_toast_animation = null;
+	function toast(message)
+	{
+		if (message === last_toast_message) {return;}
+		last_toast_message = message;
+		last_toast_animation && last_toast_animation.finish();
+		document.getElementById('toast_message').textContent = message;
+		const keyframes = [{opacity: 0.2}, {opacity: 0.2}, {opacity: 0}];
+		last_toast_animation = document.getElementById('toast').animate(keyframes, 1000);
+	}
+	this.toast = toast;
+
+	let url_timer = null;
+	function update_url()
+	{
+		// skip too frequent updates
+		clearTimeout(url_timer);
+		url_timer = setTimeout(update_url_now, 100);
+	}
+	function update_url_now()
+	{
+		const decimals = {zoom: 1};
+		const converter = {
+			string: (key, val) => val,
+			number: (key, val) => val.toFixed(decimals[key] || 0),
+			boolean: (key, val) => val ? 'yes' : 'no',
+		};
+		const recorded_types = Object.keys(converter);
+		const params = new URLSearchParams('');
+		Object.keys(data).forEach(key => {
+			const value = data[key];
+			if (value === cheat_code[key]) {return;}
+			const type = typeof value;
+			if (recorded_types.includes(type)) {
+				params.append(key, converter[type](key, value));
+			}
+		});
+		const url = location.protocol + '//' + location.host + location.pathname + '?' + params.toString();
+		history.replaceState(null, document.title, url);
+	}
+
+	document.addEventListener('keydown', e => {
+		if (e.target.tagName === 'INPUT') {return;}
+		const u = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.1);
+		switch (e.key) {
+		case ' ': e.ctrlKey && (push_url(), toast(''), toast(data.year)); break;
+		case 'h': scroll(-u, 0); break;
+		case 'j': scroll(0, +u); break;
+		case 'k': scroll(0, -u); break;
+		case 'l': scroll(+u, 0); break;
+		case 'y': scroll(-u, -u); break;
+		case 'u': scroll(+u, -u); break;
+		case 'b': scroll(-u, +u); break;
+		case 'n': scroll(+u, +u); break;
+		}
+	});
+
+	window.addEventListener('popstate', e => location.reload());
 
 	this.set_size = function(width, height)
 	{
@@ -287,56 +430,71 @@ function Map()
 		infoLayer.style.width = w;
 		infoLayer.style.height = h;
 	};
-	this.update = function()
+	function update()
 	{
 		update_map();
 		update_info();
 	};
+	this.update = update;
 	this.update_style = function()
 	{
 		for (let i = 0; i < visible_regions.length; i++) {
 			visible_regions[i].update();
 		}
+		update_url();
 	};
 
-	infoLayer.addEventListener('touchstart', function(e)
+	infoLayer.addEventListener('mousedown', function(e)
 	{
-//		mousedown_x = e.clientX;
-//		mousedown_y = e.clientY;
-		mousedown_x = e.touches[ 0 ].clientX;
-		mousedown_y = e.touches[ 0 ].clientY;
-        e.preventDefault();
-	});
-	infoLayer.addEventListener('touchmove', function(e)
-	{
-		if (e.buttons != 0 && (mousedown_x !== e.touches[ 0 ].clientX || mousedown_y !== e.touches[ 0 ].clientY)) {
-			// マウスドラッグによるスクロール
-			data.map_x += mousedown_x - e.touches[ 0 ].clientX;
-			data.map_y += mousedown_y - e.touches[ 0 ].clientY;
-			limit_map_center();
-			mousedown_x = e.touches[ 0 ].clientX;
-			mousedown_y = e.touches[ 0 ].clientY;
-			update_map();
-			update_info();
-		}
-        e.preventDefault();
-	});
-	infoLayer.addEventListener('mousedown', function(e) {
 		mousedown_x = e.clientX;
 		mousedown_y = e.clientY;
-		e.preventDefault();
+        e.preventDefault();
 	});
-	
-	infoLayer.addEventListener('mousemove', function(e) {
-		if (e.buttons !== 0 && (mousedown_x !== e.clientX || mousedown_y !== e.clientY)) {
-			data.map_x += mousedown_x - e.clientX;
-			data.map_y += mousedown_y - e.clientY;
-			limit_map_center();
+	infoLayer.addEventListener('mouseup', function(e)
+	{
+		mousedown_x = null;
+		mousedown_y = null;
+        e.preventDefault();
+	});
+	infoLayer.addEventListener('mousemove', function(e)
+	{
+		if (e.buttons != 0 && !is_dragging_year && mousedown_x !== null && (mousedown_x !== e.clientX || mousedown_y !== e.clientY)) {
+			// マウスドラッグによるスクロール
+			scroll(mousedown_x - e.clientX, mousedown_y - e.clientY);
 			mousedown_x = e.clientX;
 			mousedown_y = e.clientY;
-			update_map();
-			update_info();
-			e.preventDefault();
 		}
-	});	
+        e.preventDefault();
+	});
+
+	let prevPoint = null;
+	function touchedPoint(e)
+	{
+		const t = e.changedTouches[0];  // ignore multi-touch
+		return {x: t.clientX, y: t.clientY};
+	}
+	function onTouchStart(e)
+	{
+		if (e.touches.length !== 1) {
+			prevPoint = null;
+			return;
+		}
+		prevPoint = touchedPoint(e);
+		// (workaround for Firefox)
+		// In Firefox, mousemove is fired before mousedown by a tap???
+		mousedown_x = prevPoint.x;
+		mousedown_y = prevPoint.y;
+	}
+	function onTouchMove(e)
+	{
+		if (is_dragging_year || e.touches.length !== 1 || prevPoint === null) {
+			prevPoint = null;
+			return;
+		}
+		const point = touchedPoint(e);
+		scroll(prevPoint.x - point.x, prevPoint.y - point.y);
+		prevPoint = point;
+	}
+	infoLayer.addEventListener('touchstart', onTouchStart);
+	infoLayer.addEventListener('touchmove', onTouchMove);
 }
